@@ -4,3 +4,6 @@
 [submodule "libs/sdk"]
 	path = libs/sdk
 	url = https://github.com/AmyrAhmady/samp-plugin-sdk
+[submodule "libs/log-core"]
+	path = libs/log-core
+	url = https://github.com/AmyrAhmady/samp-log-core
