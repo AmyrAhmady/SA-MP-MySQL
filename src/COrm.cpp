@@ -221,9 +221,8 @@ CError<COrm> COrm::GenerateSelectQuery(string &dest)
 	if (!m_KeyVariable)
 		return{ COrm::Error::NO_KEY_VARIABLE, "no key variable set" };
 
-	fmt::MemoryWriter writer;
-	writer << "SELECT ";
-	WriteVariableNamesAsList(writer);
+	std::string query = "SELECT ";
+	WriteVariableNamesAsList(query);
 
 	auto handle = CHandleManager::Get()->GetHandle(GetHandleId());
 	if (handle == nullptr)
@@ -239,10 +238,10 @@ CError<COrm> COrm::GenerateSelectQuery(string &dest)
 			"can't represent variable value as string" };
 	}
 
-	writer << " FROM `" << m_Table << "` WHERE `" << m_KeyVariable.GetName()
-		<< "`='" << key_var_value << "' LIMIT 1";
+	query += fmt::format(" FROM `{}` WHERE `{}`='{}' LIMIT 1",
+		m_Table, m_KeyVariable.GetName(), key_var_value);
 
-	dest.assign(writer.str());
+	dest.assign(query);
 	return{ };
 }
 
@@ -264,12 +263,11 @@ CError<COrm> COrm::GenerateUpdateQuery(string &dest)
 			"invalid connection handle" };
 	}
 
-	fmt::MemoryWriter writer;
-	writer << "UPDATE `" << m_Table << "` SET `";
+	std::string query = fmt::format("UPDATE `{}` SET `", m_Table);
 	for (size_t i = 0; i != m_Variables.size(); ++i)
 	{
 		if (i != 0)
-			writer << "',`";
+			query += "',`";
 		Variable &var = m_Variables.at(i);
 
 		string var_value;
@@ -279,7 +277,7 @@ CError<COrm> COrm::GenerateUpdateQuery(string &dest)
 				"can't represent variable value as string" };
 		}
 
-		writer << var.GetName() << "`='" << var_value;
+		query += fmt::format("{}`='{}", var.GetName(), var_value);
 	}
 
 	string key_var_value;
@@ -289,11 +287,10 @@ CError<COrm> COrm::GenerateUpdateQuery(string &dest)
 			"can't represent variable value as string" };
 	}
 
-	writer << "' WHERE `"
-		<< m_KeyVariable.GetName() << "`='" << key_var_value
-		<< "' LIMIT 1";
+	query += fmt::format("' WHERE `{}`='{}' LIMIT 1",
+		m_KeyVariable.GetName(), key_var_value);
 
-	dest.assign(writer.str());
+	dest.assign(query);
 	return{ };
 }
 
@@ -315,14 +312,13 @@ CError<COrm> COrm::GenerateInsertQuery(string &dest)
 			"invalid connection handle" };
 	}
 
-	fmt::MemoryWriter writer;
-	writer << "INSERT INTO `" << m_Table << "` (";
-	WriteVariableNamesAsList(writer);
-	writer << ") VALUES ('";
+	std::string query = fmt::format("INSERT INTO `{}` (", m_Table);
+	WriteVariableNamesAsList(query);
+	query += ") VALUES ('";
 	for (size_t i = 0; i != m_Variables.size(); ++i)
 	{
 		if (i != 0)
-			writer << "','";
+			query += "','";
 
 		string var_value;
 		if (!m_Variables.at(i).GetValueAsString(var_value, handle))
@@ -330,11 +326,11 @@ CError<COrm> COrm::GenerateInsertQuery(string &dest)
 			return{ Error::INVALID_STRING_REPRESENTATION,
 				"can't represent variable value as string" };
 		}
-		writer << var_value;
+		query += var_value;
 	}
-	writer << "')";
+	query += "')";
 
-	dest.assign(writer.str());
+	dest.assign(query);
 	return{ };
 }
 
@@ -474,19 +470,19 @@ bool COrm::UpdateKeyValue(const Result_t result)
 	return true;
 }
 
-void COrm::WriteVariableNamesAsList(fmt::MemoryWriter &writer)
+void COrm::WriteVariableNamesAsList(std::string &output)
 {
 	CLog::Get()->Log(LogLevel::DEBUG, "COrm::WriteVariableNamesAsList(this={})",
 					 static_cast<const void *>(this));
 
-	writer << '`';
+	output += '`';
 	for (size_t i = 0; i != m_Variables.size(); ++i)
 	{
 		if (i != 0)
-			writer << "`,`";
-		writer << m_Variables.at(i).GetName();
+			output += "`,`";
+		output += m_Variables.at(i).GetName();
 	}
-	writer << '`';
+	output += '`';
 }
 
 

@@ -1081,7 +1081,8 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 		return 0;
 	}
 
-	fmt::MemoryWriter dest_writer;
+	std::string dest_str;
+	dest_str.reserve(dest_maxsize);
 
 	const unsigned int
 		first_param_idx = 5,
@@ -1093,7 +1094,7 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 	{
 		bool break_loop = false;
 
-		if (dest_writer.size() >= dest_maxsize)
+		if (dest_str.size() >= dest_maxsize)
 		{
 			CLog::Get()->LogNative(LogLevel::ERROR,
 								   "destination size '{}' is too small",
@@ -1107,7 +1108,7 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 
 			if (*format_str == '%')
 			{
-				dest_writer << '%';
+				dest_str += '%';
 				continue;
 			}
 
@@ -1136,11 +1137,11 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 				case 'x':
 				case 'X':
 				case 'u':
-					dest_writer << fmt::sprintf(format_spec,
+					dest_str += fmt::sprintf(format_spec,
 												static_cast<int>(*amx_address));
 					break;
 				case 's':
-					dest_writer << amx_GetCppString(amx,
+					dest_str += amx_GetCppString(amx,
 										params[first_param_idx + param_counter]);
 					break;
 				case 'f':
@@ -1149,7 +1150,7 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 				case 'A':
 				case 'g':
 				case 'G':
-					dest_writer << fmt::sprintf(format_spec,
+					dest_str += fmt::sprintf(format_spec,
 												amx_ctof(*amx_address));
 					break;
 				case 'e':
@@ -1163,7 +1164,7 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 						string escaped_str;
 						if (handle->EscapeString(source_str, escaped_str))
 						{
-							dest_writer << escaped_str;
+							dest_str += escaped_str;
 						}
 						else
 						{
@@ -1179,7 +1180,7 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 				{
 					string bin_str;
 					ConvertDataToStr<int, 2>(*amx_address, bin_str);
-					dest_writer << bin_str;
+					dest_str += bin_str;
 				}
 				break;
 				default:
@@ -1197,15 +1198,15 @@ AMX_DECLARE_NATIVE(Native::mysql_format)
 		}
 		else
 		{
-			dest_writer << *format_str;
+			dest_str += *format_str;
 		}
 	}
 
 	cell ret_val = 0;
 	if (*format_str == '\0') //loop exited normally
 	{
-		ret_val = static_cast<cell>(dest_writer.size());
-		amx_SetCString(amx, params[2], dest_writer.c_str(), dest_maxsize);
+		ret_val = static_cast<cell>(dest_str.size());
+		amx_SetCString(amx, params[2], dest_str.c_str(), dest_maxsize);
 	}
 
 	CLog::Get()->LogNative(LogLevel::DEBUG, "return value: '{}'", ret_val);

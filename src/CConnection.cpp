@@ -218,15 +218,26 @@ void CThreadedConnection::WorkerFunc()
 					 static_cast<const void *>(this),
 					 static_cast<const void *>(&m_Connection));
 
-	std::unique_lock<std::mutex> lock(m_QueueNotifierMutex);
+	std::unique_lock<std::mutex> notifier_lock(m_QueueNotifierMutex);
 
 	mysql_thread_init();
 
 	while (m_WorkerThreadActive)
 	{
-		m_QueueNotifier.wait(lock);
+		m_QueueNotifier.wait(notifier_lock);
 		Query_t query;
-		while (m_Queue.pop(query))
+
+		// Pop from queue with mutex protection
+		{
+			std::lock_guard<std::mutex> queue_lock(m_QueueMutex);
+			if (!m_Queue.empty())
+			{
+				query = m_Queue.front();
+				m_Queue.pop();
+			}
+		}
+
+		while (query)
 		{
 			DispatchFunction_t func;
 			if (m_Connection.Execute(query))
@@ -243,6 +254,15 @@ void CThreadedConnection::WorkerFunc()
 
 			--m_UnprocessedQueries;
 			CDispatcher::Get()->Dispatch(std::move(func));
+
+			// Get next query
+			query = nullptr;
+			std::lock_guard<std::mutex> queue_lock(m_QueueMutex);
+			if (!m_Queue.empty())
+			{
+				query = m_Queue.front();
+				m_Queue.pop();
+			}
 		}
 	}
 
@@ -256,8 +276,10 @@ void CThreadedConnection::WorkerFunc()
 
 bool CThreadedConnection::Queue(Query_t query)
 {
-	if (!m_Queue.push(query))
-		return false;
+	{
+		std::lock_guard<std::mutex> queue_lock(m_QueueMutex);
+		m_Queue.push(query);
+	}
 
 	++m_UnprocessedQueries;
 	m_QueueNotifier.notify_one();

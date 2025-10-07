@@ -2,70 +2,84 @@
 
 #include <string>
 #include <type_traits>
-
-#pragma warning (push)
-#pragma warning (disable: 4244 4018 4348)
-
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/karma.hpp>
+#include <charconv>
+#include <cstring>
+#include <system_error>
 
 using std::string;
-namespace qi = boost::spirit::qi;
-namespace karma = boost::spirit::karma;
 
 
 template<typename T>
 bool ConvertStrToData(const string &src, T &dest)
 {
-	return qi::parse(src.begin(), src.end(),
-		typename std::conditional<
-			std::is_floating_point<T>::value,
-				qi::real_parser<T>,
-				qi::int_parser<T>
-		>::type(),
-		dest);
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		// Handle boolean conversion
+		if (src == "true" || src == "1")
+		{
+			dest = true;
+			return true;
+		}
+		else if (src == "false" || src == "0")
+		{
+			dest = false;
+			return true;
+		}
+		return false;
+	}
+	else
+	{
+		auto result = std::from_chars(src.data(), src.data() + src.size(), dest);
+		return result.ec == std::errc() && result.ptr == src.data() + src.size();
+	}
 }
 
 template<typename T>
 bool ConvertStrToData(const char *src, T &dest)
 {
-	return src != nullptr && qi::parse(src, src + strlen(src),
-		typename std::conditional<
-			std::is_floating_point<T>::value,
-				qi::real_parser<T>,
-				qi::int_parser<T>
-		>::type(),
-		dest);
+	if (src == nullptr)
+		return false;
+
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		// Handle boolean conversion
+		if (strcmp(src, "true") == 0 || strcmp(src, "1") == 0)
+		{
+			dest = true;
+			return true;
+		}
+		else if (strcmp(src, "false") == 0 || strcmp(src, "0") == 0)
+		{
+			dest = false;
+			return true;
+		}
+		return false;
+	}
+	else
+	{
+		auto result = std::from_chars(src, src + strlen(src), dest);
+		return result.ec == std::errc() && result.ptr == src + strlen(src);
+	}
 }
 
 
 template<typename T, unsigned int B = 10U>
 bool ConvertDataToStr(T src, string &dest)
 {
-	return karma::generate(std::back_inserter(dest),
-		typename std::conditional<
-			std::is_floating_point<T>::value,
-				karma::real_generator<T>,
-				typename std::conditional<
-					std::is_signed<T>::value,
-						karma::int_generator<T, B>,
-						karma::uint_generator<T, B>
-				>::type
-		>::type(),
-		src);
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		dest += src ? "true" : "false";
+		return true;
+	}
+	else
+	{
+		char buffer[64];
+		auto result = std::to_chars(buffer, buffer + sizeof(buffer), src, B);
+		if (result.ec == std::errc())
+		{
+			dest.append(buffer, result.ptr - buffer);
+			return true;
+		}
+		return false;
+	}
 }
-
-template<> //bool specialization
-inline bool ConvertStrToData(const string &src, bool &dest)
-{
-	return qi::parse(src.begin(), src.end(), qi::bool_, dest);
-}
-
-template<> //bool specialization
-inline bool ConvertDataToStr(bool src, string &dest)
-{
-	return karma::generate(std::back_inserter(dest), karma::bool_, src);
-}
-
-
-#pragma warning (pop)

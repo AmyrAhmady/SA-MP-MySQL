@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <tuple>
 #include <cstdarg>
-#include <boost/any.hpp>
+#include <any>
 
 using std::string;
 using std::queue;
@@ -26,7 +26,7 @@ using std::tuple;
 class CCallback
 {
 public: //type definitions
-	using ParamList_t = list<tuple<char, boost::any>>;
+	using ParamList_t = list<tuple<char, std::any>>;
 
 	enum class Error
 	{

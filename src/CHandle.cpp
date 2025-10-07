@@ -1,6 +1,4 @@
 #include <fstream>
-#pragma warning (disable: 4348) //silence boost spirit warnings
-#include <boost/spirit/include/qi.hpp>
 
 #include "mysql.hpp"
 
@@ -10,7 +8,7 @@
 #include "COptions.hpp"
 #include "misc.hpp"
 
-#include <boost/functional/hash.hpp>
+#include <functional>
 
 
 const string CHandle::ModuleName{ "handle" };
@@ -215,9 +213,9 @@ Handle_t CHandleManager::Create(const char *host, const char *user,
 
 	static const std::hash<string> do_hash;
 	size_t full_hash = 0;
-	boost::hash_combine(full_hash, do_hash(host));
-	boost::hash_combine(full_hash, do_hash(user));
-	boost::hash_combine(full_hash, do_hash(db));
+	full_hash ^= do_hash(host) + 0x9e3779b9 + (full_hash << 6) + (full_hash >> 2);
+	full_hash ^= do_hash(user) + 0x9e3779b9 + (full_hash << 6) + (full_hash >> 2);
+	full_hash ^= do_hash(db) + 0x9e3779b9 + (full_hash << 6) + (full_hash >> 2);
 
 	if (COptionManager::Get()->GetGlobalOption(
 		COptionManager::GlobalOption::DUPLICATE_CONNECTIONS) == false)

@@ -5,8 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
-#include <boost/lockfree/queue.hpp>
-#include <boost/lockfree/spsc_queue.hpp>
+#include <queue>
 
 using std::string;
 
@@ -54,11 +53,10 @@ public:
 private:
 	CConnection m_Connection;
 
+	std::mutex m_QueueMutex;
 	std::mutex m_QueueNotifierMutex;
 	std::condition_variable m_QueueNotifier;
-	boost::lockfree::spsc_queue < Query_t,
-		boost::lockfree::fixed_sized < true >,
-		boost::lockfree::capacity < 65536 >> m_Queue;
+	std::queue<Query_t> m_Queue;
 
 	std::atomic<unsigned int> m_UnprocessedQueries;
 

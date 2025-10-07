@@ -292,7 +292,7 @@ bool CCallback::Execute()
 	for (auto &i : m_Params)
 	{
 		cell tmp_addr;
-		boost::any &param_val = std::get<1>(i);
+		std::any &param_val = std::get<1>(i);
 		char specifier = std::get<0>(i);
 
 		CLog::Get()->Log(LogLevel::DEBUG,
@@ -301,7 +301,7 @@ bool CCallback::Execute()
 		{
 			case 'c': //cell
 			{
-				const cell value = boost::any_cast<cell>(param_val);
+				const cell value = std::any_cast<cell>(param_val);
 				amx_Push(m_AmxInstance, value);
 
 				CLog::Get()->Log(LogLevel::DEBUG,
@@ -310,7 +310,7 @@ bool CCallback::Execute()
 			break;
 			case 's': //string
 			{
-				const string value = boost::any_cast<string>(param_val);
+				const string value = std::any_cast<string>(param_val);
 				amx_PushString(m_AmxInstance, &tmp_addr, nullptr,
 							   value.c_str(), 0, 0);
 
@@ -323,7 +323,7 @@ bool CCallback::Execute()
 			break;
 			case 'a': //array
 			{
-				auto array_tuple = boost::any_cast<tuple<cell *, cell>>(param_val);
+				auto array_tuple = std::any_cast<tuple<cell *, cell>>(param_val);
 				cell *array_addr = std::get<0>(array_tuple);
 				cell array_size = std::get<1>(array_tuple);
 				amx_PushArray(m_AmxInstance, &tmp_addr, nullptr, array_addr, array_size);
@@ -339,7 +339,7 @@ bool CCallback::Execute()
 			break;
 			case 'r': //reference
 			{
-				cell * const value = boost::any_cast<cell *>(param_val);
+				cell * const value = std::any_cast<cell *>(param_val);
 				amx_PushAddress(m_AmxInstance, value);
 
 				CLog::Get()->Log(LogLevel::DEBUG,

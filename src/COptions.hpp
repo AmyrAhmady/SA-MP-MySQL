@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
-#include <boost/variant.hpp>
+#include <variant>
 
 using std::string;
 using std::map;
@@ -37,7 +37,7 @@ private:
 	~COptions() = default;
 
 private:
-	map<Type, boost::variant<bool, unsigned int, string>> m_Options;
+	map<Type, std::variant<bool, unsigned int, string>> m_Options;
 
 private: //helper function
 	template <typename T>
@@ -74,7 +74,7 @@ public:
 	template<typename T>
 	inline T GetOption(Type option) const
 	{
-		return boost::get<T>(m_Options.at(option));
+		return std::get<T>(m_Options.at(option));
 	}
 
 };

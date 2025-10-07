@@ -90,7 +90,7 @@ if(MSVC)
 	set_target_properties(mysql PROPERTIES
 		LINK_FLAGS "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/plugin.def"
 	)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_ENABLE_ATOMIC_ALIGNMENT_FIX)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_ENABLE_ATOMIC_ALIGNMENT_FIX -D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
 endif()
 
 target_link_libraries(mysql log-core fmt)
