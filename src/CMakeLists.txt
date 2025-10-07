@@ -21,7 +21,7 @@ configure_file(
 	@ONLY
 )
 
-add_samp_plugin(mysql
+set(SOURCES
 	${PROJECT_SOURCE_DIR}/libs/sdk/amxplugin.cpp
 	CCallback.cpp
 	CCallback.hpp
@@ -52,6 +52,9 @@ add_samp_plugin(mysql
 	types.hpp
 	plugin.def
 )
+
+# Create shared library
+add_library(mysql SHARED ${SOURCES})
 
 target_include_directories(mysql PRIVATE
 	${MYSQLCAPI_INCLUDE_DIR}
@@ -84,6 +87,9 @@ target_compile_features(mysql PUBLIC
 add_dependencies(mysql log-core fmt)
 
 if(MSVC)
+	set_target_properties(mysql PROPERTIES
+		LINK_FLAGS "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/plugin.def"
+	)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_ENABLE_ATOMIC_ALIGNMENT_FIX)
 endif()
 
@@ -105,8 +111,7 @@ else()
 endif()
 
 install(TARGETS mysql DESTINATION "plugins/")
-get_target_property(LOGCORE_LOCATION log-core LOCATION)
-install(FILES "${LOGCORE_LOCATION}" DESTINATION "./")
+install(TARGETS log-core DESTINATION "./")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/a_mysql.inc" DESTINATION "pawno/include/")
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION "./")
 if(WIN32 AND MYSQLCAPI_LIBRARY_SHARED)

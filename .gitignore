@@ -29,3 +29,5 @@ __*/
 
 #MacOS
 .DS_Store
+
+temp/*
