@@ -23,7 +23,7 @@ bool CQuery::Execute(MYSQL *connection)
 			error_str ? error_str : "(nullptr)");
 
 		if (!m_DbgInfo.empty())
-			CLog::Get()->Log(LogLevel::ERROR, m_DbgInfo, msg.c_str());
+			CLog::Get()->Log(LogLevel::ERROR, msg.c_str());
 		else
 			CLog::Get()->Log(LogLevel::ERROR, msg.c_str());
 		return false;

@@ -1,4 +1,5 @@
 #include <fstream>
+#include <regex>
 
 #include "mysql.hpp"
 
@@ -383,14 +384,16 @@ Handle_t CHandleManager::CreateFromFile(string file_path, CError<CHandle> &error
 		if (line.empty())
 			continue;
 
-		std::string field, data;
-		if (qi::parse(line.begin(), line.end(),
-					  qi::skip(qi::space)[
-						  qi::as_string[+qi::char_("a-z_")] >> qi::lit('=')
-							  >> qi::as_string[+qi::graph]
-					  ],
-					  field, data))
+		// Parse key=value format using regex
+		// Matches: key (lowercase letters and underscores) = value (non-whitespace chars)
+		std::regex key_value_regex(R"(^\s*([a-z_]+)\s*=\s*(\S+)\s*$)");
+		std::smatch match;
+
+		if (std::regex_match(line, match, key_value_regex))
 		{
+			std::string field = match[1].str();
+			std::string data = match[2].str();
+
 			auto field_it = assign_map.find(field);
 			if (field_it != assign_map.end() && data.empty() == false)
 			{

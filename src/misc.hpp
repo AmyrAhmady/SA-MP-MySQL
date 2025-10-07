@@ -71,10 +71,23 @@ bool ConvertDataToStr(T src, string &dest)
 		dest += src ? "true" : "false";
 		return true;
 	}
+	else if constexpr (std::is_floating_point_v<T>)
+	{
+		// Floating point types don't support base parameter
+		char buffer[64];
+		auto result = std::to_chars(buffer, buffer + sizeof(buffer), src);
+		if (result.ec == std::errc())
+		{
+			dest.append(buffer, result.ptr - buffer);
+			return true;
+		}
+		return false;
+	}
 	else
 	{
+		// Integer types support base parameter
 		char buffer[64];
-		auto result = std::to_chars(buffer, buffer + sizeof(buffer), src, B);
+		auto result = std::to_chars(buffer, buffer + sizeof(buffer), src, static_cast<int>(B));
 		if (result.ec == std::errc())
 		{
 			dest.append(buffer, result.ptr - buffer);

@@ -3,7 +3,7 @@
 #include "sdk.hpp"
 
 #define AMX_DECLARE_NATIVE(native) \
-	cell AMX_NATIVE_CALL native(AMX *amx, cell *params)
+	cell AMX_NATIVE_CALL native(AMX *amx, const cell *params)
 
 #define AMX_DEFINE_NATIVE(native) \
 	{#native, Native::native},

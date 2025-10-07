@@ -165,6 +165,8 @@ elseif(UNIX AND NOT MYSQLCAPI_ROOT_DIR)
 	endif()
 endif()
 
+find_package(MySQLCAPI REQUIRED)
+
 add_subdirectory(libs/log-core)
 mark_as_advanced(FMT_DOC FMT_INSTALL FMT_PEDANTIC FMT_TEST FMT_USE_CPP11)
 

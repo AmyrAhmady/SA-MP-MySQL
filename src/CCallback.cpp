@@ -4,11 +4,30 @@
 #include <map>
 
 
+inline int AMXAPI amx_PushAddress(AMX* amx, cell* address)
+{
+	AMX_HEADER* hdr;
+	unsigned char* data;
+	cell xaddr;
+	/* reverse relocate the address */
+	assert(amx != NULL);
+	hdr = (AMX_HEADER*)amx->base;
+	assert(hdr != NULL);
+	assert(hdr->magic == AMX_MAGIC);
+	data = (amx->data != NULL) ? amx->data : amx->base + (int)hdr->dat;
+	xaddr = (cell)((unsigned char*)address - data);
+	if ((ucell)xaddr >= (ucell)amx->stp)
+	{
+		return AMX_ERR_MEMACCESS;
+	}
+	return amx_Push(amx, xaddr);
+}
+
 const string CCallback::ModuleName{ "callback" };
 
 
 Callback_t CCallback::Create(AMX *amx, const char *name, const char *format,
-							 cell *params, cell param_offset,
+							 const cell *params, cell param_offset,
 							 CError<CCallback> &error)
 {
 	CLog::Get()->Log(LogLevel::DEBUG,
@@ -119,8 +138,8 @@ Callback_t CCallback::Create(AMX *amx, const char *name, const char *format,
 					break;
 				case 's': //string
 				{
-					const char *str = nullptr;
-					amx_StrParam(amx, params[param_offset + param_idx], str);
+					char *str = nullptr;
+					amx_StrParamChar(amx, params[param_offset + param_idx], str);
 					param_list.push_front(std::make_tuple('s', string(str ? str : "")));
 					CLog::Get()->Log(LogLevel::DEBUG, "retrieved and pushed value '{}'", str ? str : "");
 				}

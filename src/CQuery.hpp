@@ -17,8 +17,7 @@ public: //constructor / deconstructor
 	explicit CQuery(string &&query) :
 		m_Query(query)
 	{
-		if (CDebugInfoManager::Get()->IsInfoAvailable())
-			m_DbgInfo = CDebugInfoManager::Get()->GetCurrentInfo();
+
 	}
 	~CQuery() = default;
 

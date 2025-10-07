@@ -146,14 +146,12 @@ extern "C" const AMX_NATIVE_INFO native_list[] =
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX *amx)
 {
-	samplog::Api::Get()->RegisterAmx(amx);
 	CCallbackManager::Get()->AddAmx(amx);
 	return amx_Register(amx, native_list, -1);
 }
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX *amx)
 {
-	samplog::Api::Get()->EraseAmx(amx);
 	CCallbackManager::Get()->RemoveAmx(amx);
 	return AMX_ERR_NONE;
 }
