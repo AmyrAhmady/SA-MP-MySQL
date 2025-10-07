@@ -5,6 +5,7 @@ endif()
 set(MYSQL_PLUGIN_CONFIG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/config_headers")
 include_directories(
 	${PROJECT_SOURCE_DIR}/libs/sdk
+	${PROJECT_SOURCE_DIR}/libs/sdk/amx
 	${MYSQL_PLUGIN_CONFIG_INCLUDE_DIR}
 	${PROJECT_SOURCE_DIR}/libs/log-core/include
 )
@@ -61,29 +62,6 @@ target_include_directories(mysql PRIVATE
 	${LOGCORE_INCLUDE_DIR}
 )
 
-target_compile_features(mysql PUBLIC
-	cxx_auto_type
-	cxx_decltype
-	cxx_defaulted_functions
-	cxx_default_function_template_args
-	cxx_delegating_constructors
-	cxx_deleted_functions
-	cxx_enum_forward_declarations
-	cxx_explicit_conversions
-	cxx_extended_friend_declarations
-	cxx_lambdas
-	cxx_inheriting_constructors
-	cxx_noexcept
-	cxx_nonstatic_member_init
-	cxx_nullptr
-	cxx_range_for
-	cxx_reference_qualified_functions
-	cxx_right_angle_brackets
-	cxx_rvalue_references
-	cxx_strong_enums
-	cxx_variadic_templates
-)
-
 add_dependencies(mysql log-core fmt)
 
 if(MSVC)
@@ -96,6 +74,7 @@ endif()
 target_link_libraries(mysql log-core fmt)
 
 if(UNIX)
+	add_definitions(-DLINUX)
 	if(NOT APPLE)
 		target_link_libraries(mysql rt)
 	endif()

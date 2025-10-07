@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.1)
 project(mysql)
 
 set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Enable multi-processor compilation on Windows
 if(MSVC)
@@ -27,9 +25,9 @@ if(UNIX)
 		add_link_options(-m32)
 	endif()
 
-	#hide non-exported symbols
-	set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fPIC")
-	set(CMAKE_C_FLAGS "-fvisibility=hidden -fPIC")
+	# hide non-exported symbols
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fPIC")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC")
 endif()
 
 # Download and build MySQL/MariaDB Connector C if not found
@@ -111,33 +109,43 @@ if(WIN32)
 	endif()
 elseif(UNIX AND NOT MYSQLCAPI_ROOT_DIR)
 	# On Linux, try to find in system paths first, otherwise download and build
-	find_path(MYSQLCAPI_CHECK NAMES "mysql_version.h" PATHS "/usr/include/mysql" NO_DEFAULT_PATH)
+	set(MYSQL_CONNECTOR_VERSION "6.1.6")
+	set(MYSQL_CONNECTOR_TARBALL "${PROJECT_SOURCE_DIR}/temp/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src.tar.gz")
+	set(MYSQL_CONNECTOR_DIR "${PROJECT_SOURCE_DIR}/temp/unix/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src")
+
+	find_path(MYSQLCAPI_CHECK NAMES "mysql_version.h" PATHS "${MYSQL_CONNECTOR_DIR}/include/mysql" NO_DEFAULT_PATH)
 	if(NOT MYSQLCAPI_CHECK)
 		message(STATUS "MySQL Connector C not found in system, downloading and building...")
-		set(MYSQL_CONNECTOR_VERSION "6.1.6")
-		set(MYSQL_CONNECTOR_DIR "${CMAKE_BINARY_DIR}/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src")
 
-		if(NOT EXISTS "${MYSQL_CONNECTOR_DIR}/CMakeLists.txt")
+		# Download tarball to temp folder
+		if(NOT EXISTS "${MYSQL_CONNECTOR_TARBALL}")
+			message(STATUS "Downloading MySQL Connector C ${MYSQL_CONNECTOR_VERSION}...")
 			file(DOWNLOAD
 				"http://dev.mysql.com/get/Downloads/Connector-C/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src.tar.gz"
-				"${CMAKE_BINARY_DIR}/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src.tar.gz"
+				"${MYSQL_CONNECTOR_TARBALL}"
 				SHOW_PROGRESS
 				STATUS DOWNLOAD_STATUS
 			)
 
 			list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-			if(STATUS_CODE EQUAL 0)
-				execute_process(
-					COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_BINARY_DIR}/mysql-connector-c-${MYSQL_CONNECTOR_VERSION}-src.tar.gz"
-					WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-				)
-			else()
+			if(NOT STATUS_CODE EQUAL 0)
 				message(FATAL_ERROR "Failed to download MySQL Connector C")
 			endif()
 		endif()
 
+		# Extract to temp/unix folder
+		if(NOT EXISTS "${MYSQL_CONNECTOR_DIR}/CMakeLists.txt")
+			message(STATUS "Extracting MySQL Connector C...")
+			execute_process(COMMAND mkdir "${PROJECT_SOURCE_DIR}/temp/unix")
+			execute_process(
+				COMMAND ${CMAKE_COMMAND} -E tar xzf "${MYSQL_CONNECTOR_TARBALL}"
+				WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/temp/unix"
+			)
+		endif()
+
 		# Build MySQL Connector C
 		if(NOT EXISTS "${MYSQL_CONNECTOR_DIR}/libmysql/libmysqlclient.a")
+			message(STATUS "Building MySQL Connector C...")
 			if(TARGET_ARCH STREQUAL "x86")
 				execute_process(
 					COMMAND ${CMAKE_COMMAND}

@@ -31,3 +31,4 @@ __*/
 .DS_Store
 
 temp/*
+buildlinux/*

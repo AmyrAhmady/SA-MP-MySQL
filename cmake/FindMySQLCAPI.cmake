@@ -51,7 +51,7 @@ if(WIN32)
 		lib
 	)
 else()
-    find_path(
+	find_path(
 		MYSQLCAPI_INCLUDE_DIR
 		NAMES
 		"mysql_version.h"
@@ -60,10 +60,12 @@ else()
 		HINTS
 		${MYSQLCAPI_ROOT_DIR}
 		PATH_SUFFIXES
+		include
+		include/mysql
 		mysql
 	)
 
-    find_library(
+	find_library(
 		MYSQLCAPI_LIBRARY
 		NAME
 		mysqlclient_r
@@ -71,19 +73,25 @@ else()
 		HINTS
 		${MYSQLCAPI_ROOT_DIR}
 		PATH_SUFFIXES
+		libmysql
+		lib/mysql
+		lib
 		mysql
 		i386-linux-gnu
 		x86_64-linux-gnu
 	)
 	set(MYSQLCAPI_LIBRARY_SHARED ${MYSQLCAPI_LIBRARY})
 
-    find_library(
+	find_library(
 		MYSQLCAPI_LIBRARY_STATIC
 		NAME
 		"libmysqlclient.a"
 		HINTS
 		${MYSQLCAPI_ROOT_DIR}
 		PATH_SUFFIXES
+		libmysql
+		lib/mysql
+		lib
 		mysql
 		i386-linux-gnu
 		x86_64-linux-gnu
