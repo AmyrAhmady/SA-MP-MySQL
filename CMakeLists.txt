@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.1)
 project(mysql)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Enable multi-processor compilation on Windows
+if(MSVC)
+	add_compile_options(/MP)
+endif()
 
 set(MYSQL_PLUGIN_VERSION "R41-4")
 
@@ -22,33 +27,33 @@ if(UNIX)
 		add_link_options(-m32)
 	endif()
 
-	#force 32bit compilation and hide non-exported symbols
+	#hide non-exported symbols
 	set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fPIC")
 	set(CMAKE_C_FLAGS "-fvisibility=hidden -fPIC")
-	set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
 endif()
 
 # Download and build MySQL/MariaDB Connector C if not found
 if(WIN32)
 	# On Windows, download and install MariaDB Connector C MSI if not found
-	if(NOT DEFINED MYSQLCAPI_ROOT_DIR)
-		set(MYSQLCAPI_ROOT_DIR "${PROJECT_SOURCE_DIR}/temp/files/MariaDB/MariaDB Connector C")
+	set(MARIADB_CONNECTOR_VERSION "3.0.2")
+
+	# Determine architecture
+	message(STATUS "Checking which MariaDB Connector C build needs to be downloaded...")
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8 OR TARGET_ARCH STREQUAL "x64")
+		set(MARIADB_ARCH "win64")
+	else()
+		set(MARIADB_ARCH "win32")
 	endif()
 
-	if(NOT EXISTS "${MYSQLCAPI_ROOT_DIR}")
-		message(STATUS "MariaDB Connector C not found, downloading and extracting...")
-		set(MARIADB_CONNECTOR_VERSION "3.0.2")
+	if(NOT DEFINED MYSQLCAPI_ROOT_DIR)
+		set(MYSQLCAPI_ROOT_DIR "${PROJECT_SOURCE_DIR}/temp/${MARIADB_ARCH}/MariaDB/MariaDB Connector C")
+	endif()
 
-		# Determine architecture
-		if(CMAKE_SIZEOF_VOID_P EQUAL 8 OR TARGET_ARCH STREQUAL "x64")
-			message(STATUS "Downloading win64 version of MariaDB Connector C...")
-			set(MARIADB_ARCH "win64")
-		else()
-			message(STATUS "Downloading win32 version of MariaDB Connector C...")
-			set(MARIADB_ARCH "win32")
-		endif()
+	set(MARIADB_MSI_FILE "${PROJECT_SOURCE_DIR}/temp/mariadb-connector-c-${MARIADB_CONNECTOR_VERSION}-${MARIADB_ARCH}.msi")
 
-		set(MARIADB_MSI_FILE "${PROJECT_SOURCE_DIR}/temp/mariadb-connector-c-${MARIADB_CONNECTOR_VERSION}-${MARIADB_ARCH}.msi")
+	message(STATUS ${MARIADB_MSI_FILE})
+	if(NOT EXISTS "${MARIADB_MSI_FILE}")
+		message(STATUS "MariaDB Connector C ${MARIADB_ARCH} not found, downloading and extracting...")
 
 		set(DOWNLOAD_NEEDED FALSE)
 		if(NOT EXISTS "${MARIADB_MSI_FILE}")
@@ -79,7 +84,7 @@ if(WIN32)
 
 		# Extract the MSI
 		message(STATUS "Extracting MariaDB Connector C...")
-		file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/temp/files" EXTRACT_DIR_NATIVE)
+		file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/temp/${MARIADB_ARCH}" EXTRACT_DIR_NATIVE)
 		file(TO_NATIVE_PATH "${MARIADB_MSI_FILE}" MSI_FILE_NATIVE)
 
 		message(STATUS "Target: ${EXTRACT_DIR_NATIVE}")
